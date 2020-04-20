@@ -32,9 +32,7 @@ class ARFaceLipsViewController: UIViewController {
         
         view.addSubview(arSceneView)
         arSceneView.frame = view.frame
-        
-        let configure = ARFaceTrackingConfiguration()
-        session.run(configure, options: [.resetTracking, .removeExistingAnchors])
+        session.run(ARFaceTrackingConfiguration(), options: [.resetTracking, .removeExistingAnchors])
     }
 }
 

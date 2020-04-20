@@ -17,6 +17,8 @@
 		955C78D5221FEDCF00F08BDA /* ObjectDetectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */; };
 		955C79032229250900F08BDA /* Resource in Resources */ = {isa = PBXBuildFile; fileRef = 955C79022229250900F08BDA /* Resource */; };
 		95BDF1AC244D70500017D728 /* ARFacePointViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */; };
+		95BDF1AE244D73850017D728 /* Shader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 95BDF1AD244D73850017D728 /* Shader.metal */; };
+		95BDF1B2244D7B780017D728 /* MetalTool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BDF1B1244D7B780017D728 /* MetalTool.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +34,8 @@
 		955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDetectViewController.swift; sourceTree = "<group>"; };
 		955C79022229250900F08BDA /* Resource */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resource; sourceTree = "<group>"; };
 		95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFacePointViewController.swift; sourceTree = "<group>"; };
+		95BDF1AD244D73850017D728 /* Shader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shader.metal; sourceTree = "<group>"; };
+		95BDF1B1244D7B780017D728 /* MetalTool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalTool.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +76,8 @@
 				955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */,
 				9539C0B82237B4FE001D9731 /* ARFaceLipsViewController.swift */,
 				95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */,
+				95BDF1AD244D73850017D728 /* Shader.metal */,
+				95BDF1B1244D7B780017D728 /* MetalTool.swift */,
 			);
 			path = ARKitDemo;
 			sourceTree = "<group>";
@@ -162,7 +168,9 @@
 				955C78D5221FEDCF00F08BDA /* ObjectDetectViewController.swift in Sources */,
 				955C78CE221FC8F700F08BDA /* ImageDetectViewController.swift in Sources */,
 				955C78AA221FC35A00F08BDA /* ViewController.swift in Sources */,
+				95BDF1B2244D7B780017D728 /* MetalTool.swift in Sources */,
 				955C78A6221FC35A00F08BDA /* AppDelegate.swift in Sources */,
+				95BDF1AE244D73850017D728 /* Shader.metal in Sources */,
 				9539C0B92237B4FE001D9731 /* ARFaceLipsViewController.swift in Sources */,
 				95BDF1AC244D70500017D728 /* ARFacePointViewController.swift in Sources */,
 			);

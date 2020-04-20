@@ -11,7 +11,7 @@ import UIKit
 class ViewController: UIViewController {
     
     private lazy var dataSource: [[String]] = {
-        return [["2D图像检测", "嘴唇贴图", "ARKit人脸点"]]
+        return [["2D图像检测", "ARKit嘴唇贴图", "ARKit中的人脸点"]]
     }()
     
     private let tableView: UITableView  = {
@@ -36,17 +36,6 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return dataSource[section].count
-    }
-    
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 0 {
-            return "检测配合默认渲染视图实验"
-        }
-        
-        if section == 1 {
-            return "检测配合自定义渲染方式实验"
-        }
-        return nil
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
