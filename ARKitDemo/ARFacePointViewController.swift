@@ -11,6 +11,7 @@ import ARKit
 import Metal
 import MetalKit
 
+let kARKitFacePointCount = 1220
 class ARFacePointViewController: UIViewController {
     // MARK: - ARKit
     private lazy var session: ARSession = {
@@ -110,8 +111,8 @@ class ARFacePointViewController: UIViewController {
     
     private var faceMeshUniformBufferAddress: UnsafeMutableRawPointer!
     private var faceMeshUniformBuffer: MTLBuffer!
+    private var facePointsBufferAddress: UnsafeMutableRawPointer!
     private var facePointsBuffer: MTLBuffer!
-    private var facePointCount: Int = 0
     
     // MARK: - Life Cycle
     override func viewDidLoad() {
@@ -125,7 +126,7 @@ class ARFacePointViewController: UIViewController {
         faceMeshUniformBuffer = self.device?.makeBuffer(length: (MemoryLayout<FaceMeshUniforms>.size & ~0xFF) + 0x100, options: .storageModeShared)
         faceMeshUniformBuffer.label = "FaceMeshUniformBuffer"
         
-        facePointsBuffer = self.device?.makeBuffer(length: (MemoryLayout<vector_float3>.stride * 1220), options: [])
+        facePointsBuffer = self.device?.makeBuffer(length: (MemoryLayout<vector_float3>.stride * kARKitFacePointCount), options: [])
         facePointsBuffer.label = "FacePointBuffer"
     }
     
@@ -190,7 +191,7 @@ extension ARFacePointViewController: MTKViewDelegate {
             renderEncoder.setRenderPipelineState(faceRenderPielineState!)
             renderEncoder.setVertexBuffer(facePointsBuffer, offset: 0, index: Int(kBufferIndexGenerics.rawValue))
             renderEncoder.setVertexBuffer(faceMeshUniformBuffer, offset: 0, index: Int(kBufferIndexFaceMeshUniforms.rawValue))
-            renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: facePointCount)
+            renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: kARKitFacePointCount)
             renderEncoder.endEncoding()
             
             commandBuffer.present(drawable)
@@ -220,12 +221,15 @@ extension ARFacePointViewController: ARSessionDelegate {
             let uniforms = faceMeshUniformBufferAddress.assumingMemoryBound(to: FaceMeshUniforms.self)
             uniforms.pointee.viewMatrix = frame.camera.viewMatrix(for: .portrait)
             uniforms.pointee.projectionMatrix = frame.camera.projectionMatrix(for: .portrait,
-                                                                              viewportSize: self.facePointRenderView.frame.size,
+                                                                              viewportSize: facePointRenderView.frame.size,
                                                                               zNear: 0.001, zFar: 1000)
             uniforms.pointee.modelMatrix = faceAnchor.transform
             
-            facePointsBuffer = self.device?.makeBuffer(bytes: faceAnchor.geometry.vertices, length: faceAnchor.geometry.vertices.count * MemoryLayout<vector_float3>.size, options: [])
-            facePointCount = faceAnchor.geometry.vertices.count
+            facePointsBufferAddress = facePointsBuffer.contents()
+            for index in 0..<faceAnchor.geometry.vertices.count {
+                let curPointAddr = facePointsBufferAddress.assumingMemoryBound(to: vector_float3.self).advanced(by: index)
+                curPointAddr.pointee = faceAnchor.geometry.vertices[index]
+            }
             facePointRenderView.draw()
         }
     }
