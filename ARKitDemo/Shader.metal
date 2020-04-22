@@ -69,10 +69,10 @@ vertex FaceInputVertexIO facePointVertex(const device vector_float3 *facePoint [
     float4x4 modelViewProjectMatrix = faceMeshUniforms.projectionMatrix * faceMeshUniforms.viewMatrix * faceMeshUniforms.modelMatrix;
     FaceInputVertexIO outputVertices;
     outputVertices.position = modelViewProjectMatrix * float4(facePoint[vid], 1.0);
-    outputVertices.point_size = 2.0;
+    outputVertices.point_size = 2.5;
     return outputVertices;
 }
 
 fragment float4 facePointFragment(FaceInputVertexIO fragmentInput [[stage_in]]) {
-    return float4(1.0, 0.0, 0, 1.0);
+    return float4(0.0, 0.0, 1.0, 1.0);
 }

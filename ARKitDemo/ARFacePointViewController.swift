@@ -220,7 +220,7 @@ extension ARFacePointViewController: ARSessionDelegate {
             let uniforms = faceMeshUniformBufferAddress.assumingMemoryBound(to: FaceMeshUniforms.self)
             uniforms.pointee.viewMatrix = frame.camera.viewMatrix(for: .portrait)
             uniforms.pointee.projectionMatrix = frame.camera.projectionMatrix(for: .portrait,
-                                                                              viewportSize: arFrameSize,
+                                                                              viewportSize: self.facePointRenderView.frame.size,
                                                                               zNear: 0.001, zFar: 1000)
             uniforms.pointee.modelMatrix = faceAnchor.transform
             
