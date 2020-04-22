@@ -11,7 +11,7 @@ import UIKit
 class ViewController: UIViewController {
     
     private lazy var dataSource: [[String]] = {
-        return [["2D图像检测", "ARKit嘴唇贴图", "ARKit中的人脸点"]]
+        return [["2D图像检测", "嘴唇贴图", "人脸点位置"]]
     }()
     
     private let tableView: UITableView  = {

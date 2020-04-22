@@ -7,6 +7,8 @@
 //
 
 #include <metal_stdlib>
+#include "ShaderTypes.h"
+
 using namespace metal;
 
 struct SingleInputVertexIO {
@@ -26,8 +28,8 @@ float4 ycbcrToRGBTransform(float4 y, float4 CbCr) {
     return ycbcrToRGBTransform * ycbcr;
 }
 
-vertex SingleInputVertexIO oneInputVertex(const device packed_float2 *position [[buffer(0)]],
-                                          const device packed_float2 *texturecoord [[buffer(1)]],
+vertex SingleInputVertexIO oneInputVertex(const device packed_float2 *position [[buffer(kBufferIndexPostionCoordinates)]],
+                                          const device packed_float2 *texturecoord [[buffer(kBufferIndexTextureCoordinates)]],
                                           uint vid [[vertex_id]]) {
     SingleInputVertexIO outputVertices;
     outputVertices.position = float4(position[vid], 0, 1.0);
@@ -37,8 +39,8 @@ vertex SingleInputVertexIO oneInputVertex(const device packed_float2 *position [
 
 // 直接渲染yuv
 fragment float4 capturedImageFragment(SingleInputVertexIO in [[stage_in]],
-                                      texture2d<float, access::sample> capturedImageTextureY [[ texture(1) ]],
-                                      texture2d<float, access::sample> capturedImageTextureCbCr [[ texture(2) ]]) {
+                                      texture2d<float, access::sample> capturedImageTextureY [[texture(kTextureIndexY)]],
+                                      texture2d<float, access::sample> capturedImageTextureCbCr [[texture(kTextureIndexCbCr)]]) {
     constexpr sampler colorSampler(mip_filter::linear,
                                    mag_filter::linear,
                                    min_filter::linear);
@@ -49,8 +51,28 @@ fragment float4 capturedImageFragment(SingleInputVertexIO in [[stage_in]],
 
 // 渲染纹理
 fragment half4 passthroughFragment(SingleInputVertexIO fragmentInput [[stage_in]],
-                                   texture2d<half> inputTexture [[texture(0)]]) {
+                                   texture2d<half> inputTexture [[texture(kTextureIndexColor)]]) {
     constexpr sampler quadSampler;
     half4 color = inputTexture.sample(quadSampler, fragmentInput.textureCoordinate);
     return color;
+}
+
+// MARK: - 人脸点绘制
+struct FaceInputVertexIO {
+    float4 position [[position]];
+    float  point_size [[point_size]];
+};
+
+vertex FaceInputVertexIO facePointVertex(const device vector_float3 *facePoint [[buffer(kBufferIndexGenerics)]],
+                                         constant FaceMeshUniforms &faceMeshUniforms [[buffer(kBufferIndexFaceMeshUniforms)]],
+                                         ushort vid [[vertex_id]]) {
+    float4x4 modelViewProjectMatrix = faceMeshUniforms.projectionMatrix * faceMeshUniforms.viewMatrix * faceMeshUniforms.modelMatrix;
+    FaceInputVertexIO outputVertices;
+    outputVertices.position = modelViewProjectMatrix * float4(facePoint[vid], 1.0);
+    outputVertices.point_size = 2.0;
+    return outputVertices;
+}
+
+fragment float4 facePointFragment(FaceInputVertexIO fragmentInput [[stage_in]]) {
+    return float4(1.0, 0.0, 0, 1.0);
 }

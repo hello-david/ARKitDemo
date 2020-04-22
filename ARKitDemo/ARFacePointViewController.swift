@@ -66,29 +66,73 @@ class ARFacePointViewController: UIViewController {
         let descriptor = MTLRenderPassDescriptor()
         descriptor.colorAttachments[0].loadAction = .clear
         descriptor.colorAttachments[0].storeAction = .store
-        descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0, 0.0, 1.0)
+        descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0, 0.0, 0.0)
         return descriptor
     }()
     
-    private lazy var renderView: MTKView = {
+    private lazy var captureRenderView: MTKView = {
         let view = MTKView(frame: CGRect.zero, device: self.device)
         view.delegate = self
         view.isPaused = true
         return view
     }()
     
+    private lazy var facePointRenderView: MTKView = {
+        let view = MTKView(frame: CGRect.zero, device: self.device)
+        view.delegate = self
+        view.isPaused = true
+        view.isOpaque = false
+        return view
+    }()
+    
+    private lazy var faceRenderPielineState: MTLRenderPipelineState? = {
+        let descriptor = MTLRenderPipelineDescriptor()
+        descriptor.vertexFunction = self.shaderLibrary??.makeFunction(name: "facePointVertex")
+        descriptor.fragmentFunction = self.shaderLibrary??.makeFunction(name: "facePointFragment")
+        descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        descriptor.colorAttachments[0].isBlendingEnabled = true
+        descriptor.colorAttachments[0].rgbBlendOperation = .add;
+        descriptor.colorAttachments[0].alphaBlendOperation = .add;
+        descriptor.colorAttachments[0].sourceRGBBlendFactor = .sourceAlpha;
+        descriptor.colorAttachments[0].sourceAlphaBlendFactor = .sourceAlpha;
+        descriptor.colorAttachments[0].destinationRGBBlendFactor = .oneMinusSourceAlpha;
+        descriptor.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha;
+        return (try? self.device?.makeRenderPipelineState(descriptor: descriptor)) ?? nil
+    }()
+    
+    private lazy var faceRenderPassDecriptor: MTLRenderPassDescriptor = {
+        let descriptor = MTLRenderPassDescriptor()
+        descriptor.colorAttachments[0].loadAction = .clear
+        descriptor.colorAttachments[0].storeAction = .store
+        descriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0, 0.0, 0.0)
+        return descriptor
+    }()
+    
+    private var faceMeshUniformBufferAddress: UnsafeMutableRawPointer!
+    private var faceMeshUniformBuffer: MTLBuffer!
+    private var facePointsBuffer: MTLBuffer!
+    private var facePointCount: Int = 0
+    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor.white
         UIApplication.shared.isIdleTimerDisabled = true
-        view.addSubview(renderView)
+        view.addSubview(captureRenderView)
+        view.addSubview(facePointRenderView)
         session.run(ARFaceTrackingConfiguration(), options: [.resetTracking, .removeExistingAnchors])
+        
+        faceMeshUniformBuffer = self.device?.makeBuffer(length: (MemoryLayout<FaceMeshUniforms>.size & ~0xFF) + 0x100, options: .storageModeShared)
+        faceMeshUniformBuffer.label = "FaceMeshUniformBuffer"
+        
+        facePointsBuffer = self.device?.makeBuffer(length: (MemoryLayout<vector_float3>.stride * 1220), options: [])
+        facePointsBuffer.label = "FacePointBuffer"
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        renderView.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: view.frame.size.height)
+        captureRenderView.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: view.frame.size.height)
+        facePointRenderView.frame = CGRect(x: 0, y: 0, width: view.frame.size.width, height: view.frame.size.height)
     }
 }
 
@@ -96,7 +140,6 @@ extension ARFacePointViewController {
     private func createTexture(fromPixelBuffer pixelBuffer: CVPixelBuffer, pixelFormat: MTLPixelFormat, planeIndex: Int) -> CVMetalTexture? {
         let width = CVPixelBufferGetWidthOfPlane(pixelBuffer, planeIndex)
         let height = CVPixelBufferGetHeightOfPlane(pixelBuffer, planeIndex)
-        
         var texture: CVMetalTexture? = nil
         let status = CVMetalTextureCacheCreateTextureFromImage(nil, capturedImageTextureCache!,
                                                                pixelBuffer, nil, pixelFormat,
@@ -114,27 +157,45 @@ extension ARFacePointViewController: MTKViewDelegate {
     }
     
     func draw(in view: MTKView) {
-        // 渲染流程
         guard let drawable = view.currentDrawable else { return }
-        guard let textureY = capturedImageTextureY, let textureCbCr = capturedImageTextureCbCr else {
-            return
+        
+        if view.isEqual(captureRenderView) {
+            guard let textureY = capturedImageTextureY, let textureCbCr = capturedImageTextureCbCr else {
+                return
+            }
+            
+            renderPassDecriptor.colorAttachments[0].texture = drawable.texture
+            guard let commandBuffer = commandQueue?.makeCommandBuffer() else { return }
+            guard  let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDecriptor) else { return }
+            commandBuffer.enqueue()
+            
+            renderEncoder.setRenderPipelineState(renderPielineState!)
+            renderEncoder.setVertexBuffer(positionCoordinateBuffer!, offset: 0, index: Int(kBufferIndexPostionCoordinates.rawValue))
+            renderEncoder.setVertexBuffer(textureCoordinateBuffer!, offset: 0, index: Int(kBufferIndexTextureCoordinates.rawValue))
+            renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(textureY), index: Int(kTextureIndexY.rawValue))
+            renderEncoder.setFragmentTexture(CVMetalTextureGetTexture(textureCbCr), index: Int(kTextureIndexCbCr.rawValue))
+            renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
+            renderEncoder.endEncoding()
+            
+            commandBuffer.present(drawable)
+            commandBuffer.commit()
         }
         
-        renderPassDecriptor.colorAttachments[0].texture = drawable.texture
-        let commandBuffer = commandQueue?.makeCommandBuffer()
-        let renderEncoder = commandBuffer?.makeRenderCommandEncoder(descriptor: renderPassDecriptor)
-        commandBuffer?.enqueue()
-        
-        renderEncoder?.setRenderPipelineState(renderPielineState!)
-        renderEncoder?.setVertexBuffer(positionCoordinateBuffer!, offset: 0, index: 0)
-        renderEncoder?.setVertexBuffer(textureCoordinateBuffer!, offset: 0, index: 1)
-        renderEncoder?.setFragmentTexture(CVMetalTextureGetTexture(textureY), index: 1)
-        renderEncoder?.setFragmentTexture(CVMetalTextureGetTexture(textureCbCr), index: 2)
-        renderEncoder?.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
-        renderEncoder?.endEncoding()
-        
-        commandBuffer?.present(drawable)
-        commandBuffer?.commit()
+        if view.isEqual(facePointRenderView) {
+            faceRenderPassDecriptor.colorAttachments[0].texture = drawable.texture
+            guard let commandBuffer = commandQueue?.makeCommandBuffer() else { return }
+            guard  let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: faceRenderPassDecriptor) else { return }
+            commandBuffer.enqueue()
+            
+            renderEncoder.setRenderPipelineState(faceRenderPielineState!)
+            renderEncoder.setVertexBuffer(facePointsBuffer, offset: 0, index: Int(kBufferIndexGenerics.rawValue))
+            renderEncoder.setVertexBuffer(faceMeshUniformBuffer, offset: 0, index: Int(kBufferIndexFaceMeshUniforms.rawValue))
+            renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: facePointCount)
+            renderEncoder.endEncoding()
+            
+            commandBuffer.present(drawable)
+            commandBuffer.commit()
+        }
     }
 }
 
@@ -151,6 +212,21 @@ extension ARFacePointViewController: ARSessionDelegate {
         
         // 图像是旋转的，需要把宽高换一下
         arFrameSize = CGSize(width: CVPixelBufferGetHeight(frame.capturedImage), height: CVPixelBufferGetWidth(frame.capturedImage))
-        renderView.draw()
+//        captureRenderView.draw()
+        
+        // 拿人脸拓扑
+        if let faceAnchor = frame.anchors.first as? ARFaceAnchor {
+            faceMeshUniformBufferAddress = faceMeshUniformBuffer.contents()
+            let uniforms = faceMeshUniformBufferAddress.assumingMemoryBound(to: FaceMeshUniforms.self)
+            uniforms.pointee.viewMatrix = frame.camera.viewMatrix(for: .portrait)
+            uniforms.pointee.projectionMatrix = frame.camera.projectionMatrix(for: .portrait,
+                                                                              viewportSize: arFrameSize,
+                                                                              zNear: 0.001, zFar: 1000)
+            uniforms.pointee.modelMatrix = faceAnchor.transform
+            
+            facePointsBuffer = self.device?.makeBuffer(bytes: faceAnchor.geometry.vertices, length: faceAnchor.geometry.vertices.count * MemoryLayout<vector_float3>.size, options: [])
+            facePointCount = faceAnchor.geometry.vertices.count
+            facePointRenderView.draw()
+        }
     }
 }
