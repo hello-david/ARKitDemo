@@ -18,12 +18,6 @@ class ARFaceLipsViewController: UIViewController {
         return view
     }()
     
-    private var session: ARSession {
-        return arSceneView.session
-    }
-    
-    let renderQueue = DispatchQueue(label: Bundle.main.bundleIdentifier! + ".ARFaceRenderQueue")
-    
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,7 +26,7 @@ class ARFaceLipsViewController: UIViewController {
         
         view.addSubview(arSceneView)
         arSceneView.frame = view.frame
-        session.run(ARFaceTrackingConfiguration(), options: [.resetTracking, .removeExistingAnchors])
+        arSceneView.session.run(ARFaceTrackingConfiguration(), options: [.resetTracking, .removeExistingAnchors])
     }
 }
 
@@ -44,10 +38,6 @@ extension ARFaceLipsViewController: ARSessionDelegate {
 }
 
 extension ARFaceLipsViewController: ARSCNViewDelegate {
-    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-       
-    }
-    
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         // 更新节点上的人脸拓扑
         guard let faceAnchor = anchor as? ARFaceAnchor else { return }

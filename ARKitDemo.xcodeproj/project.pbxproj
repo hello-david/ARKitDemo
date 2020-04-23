@@ -14,7 +14,6 @@
 		955C78C7221FC47A00F08BDA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 955C78C0221FC47A00F08BDA /* LaunchScreen.storyboard */; };
 		955C78C8221FC47A00F08BDA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 955C78C2221FC47A00F08BDA /* Main.storyboard */; };
 		955C78CE221FC8F700F08BDA /* ImageDetectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 955C78CD221FC8F700F08BDA /* ImageDetectViewController.swift */; };
-		955C78D5221FEDCF00F08BDA /* ObjectDetectViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */; };
 		955C79032229250900F08BDA /* Resource in Resources */ = {isa = PBXBuildFile; fileRef = 955C79022229250900F08BDA /* Resource */; };
 		95BDF1AC244D70500017D728 /* ARFacePointViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */; };
 		95BDF1AE244D73850017D728 /* Shader.metal in Sources */ = {isa = PBXBuildFile; fileRef = 95BDF1AD244D73850017D728 /* Shader.metal */; };
@@ -31,7 +30,6 @@
 		955C78C3221FC47A00F08BDA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		955C78C5221FC47A00F08BDA /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		955C78CD221FC8F700F08BDA /* ImageDetectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageDetectViewController.swift; sourceTree = "<group>"; };
-		955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectDetectViewController.swift; sourceTree = "<group>"; };
 		955C79022229250900F08BDA /* Resource */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Resource; sourceTree = "<group>"; };
 		95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFacePointViewController.swift; sourceTree = "<group>"; };
 		95BDF1AD244D73850017D728 /* Shader.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shader.metal; sourceTree = "<group>"; };
@@ -75,7 +73,6 @@
 				955C78A5221FC35A00F08BDA /* AppDelegate.swift */,
 				955C78A9221FC35A00F08BDA /* ViewController.swift */,
 				955C78CD221FC8F700F08BDA /* ImageDetectViewController.swift */,
-				955C78D4221FEDCF00F08BDA /* ObjectDetectViewController.swift */,
 				9539C0B82237B4FE001D9731 /* ARFaceLipsViewController.swift */,
 				95BDF1AB244D70500017D728 /* ARFacePointViewController.swift */,
 				95BDF1AD244D73850017D728 /* Shader.metal */,
@@ -170,7 +167,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				955C78D5221FEDCF00F08BDA /* ObjectDetectViewController.swift in Sources */,
 				955C78CE221FC8F700F08BDA /* ImageDetectViewController.swift in Sources */,
 				955C78AA221FC35A00F08BDA /* ViewController.swift in Sources */,
 				95BDF1B2244D7B780017D728 /* MetalTool.swift in Sources */,

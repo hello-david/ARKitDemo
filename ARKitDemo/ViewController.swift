@@ -11,7 +11,8 @@ import UIKit
 class ViewController: UIViewController {
     
     private lazy var dataSource: [[String]] = {
-        return [["2D图像检测", "嘴唇贴图", "人脸点位置"]]
+        return [["图像检测", "嘴唇贴图"],
+                ["人脸点位置"]]
     }()
     
     private let tableView: UITableView  = {
@@ -38,6 +39,17 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
         return dataSource[section].count
     }
 
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        if section == 0 {
+            return "ARKit检测+SenKit渲染"
+        }
+        
+        if section == 1 {
+            return "ARKit检测+Metal渲染"
+        }
+        return nil
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         cell.textLabel?.text = dataSource[indexPath.section][indexPath.row]
@@ -57,7 +69,13 @@ extension ViewController: UITableViewDelegate, UITableViewDataSource {
             case 1:
                 navigationController?.pushViewController(ARFaceLipsViewController(), animated: true)
                 break
-            case 2:
+            default: break
+            }
+        }
+        
+        if indexPath.section == 1 {
+            switch indexPath.row {
+            case 0:
                 navigationController?.pushViewController(ARFacePointViewController(), animated: true)
                 break
             default: break

@@ -202,22 +202,22 @@ extension ARFacePointViewController: MTKViewDelegate {
 }
 
 extension ARFacePointViewController: ARSessionDelegate {
-    // 获取ARKit相机画面
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let pixelBuffer = frame.capturedImage
         if CVPixelBufferGetPlaneCount(pixelBuffer) < 2 {
             return
         }
         
-        capturedImageTextureY = createTexture(fromPixelBuffer: pixelBuffer, pixelFormat: .r8Unorm, planeIndex: 0)
-        capturedImageTextureCbCr = createTexture(fromPixelBuffer: pixelBuffer, pixelFormat: .rg8Unorm, planeIndex: 1)
-        
         // 图像是旋转的，需要把宽高换一下
         arFrameSize = CGSize(width: CVPixelBufferGetHeight(frame.capturedImage), height: CVPixelBufferGetWidth(frame.capturedImage))
-//        captureRenderView.draw()
+        capturedImageTextureY = createTexture(fromPixelBuffer: pixelBuffer, pixelFormat: .r8Unorm, planeIndex: 0)
+        capturedImageTextureCbCr = createTexture(fromPixelBuffer: pixelBuffer, pixelFormat: .rg8Unorm, planeIndex: 1)
+        if capturedImageTextureY != nil && capturedImageTextureCbCr != nil {
+            captureRenderView.draw()
+        }
         
-        // 拿人脸拓扑
         if let faceAnchor = frame.anchors.first as? ARFaceAnchor {
+            // 绘制人脸点
             faceMeshUniformBufferAddress = faceMeshUniformBuffer.contents()
             let uniforms = faceMeshUniformBufferAddress.assumingMemoryBound(to: FaceMeshUniforms.self)
             uniforms.pointee.viewMatrix = frame.camera.viewMatrix(for: .portrait)
@@ -233,6 +233,7 @@ extension ARFacePointViewController: ARSessionDelegate {
             }
             facePointRenderView.draw()
             
+            // 绘制人脸点索引文本
             for label in indexLabels {
                 label.removeFromSuperview()
             }

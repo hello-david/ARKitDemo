@@ -10,37 +10,28 @@ import UIKit
 import ARKit
 
 class ImageDetectViewController: UIViewController {
-    // 这个是一个整合SceneKit渲染和ARKit检测的视图
     private lazy var arSceneView: ARSCNView = {
         let view = ARSCNView()
         view.delegate = self
         view.session.delegate = self
         return view
     }()
-    
-    private var session: ARSession {
-        return arSceneView.session
-    }
-    
-    let renderQueue = DispatchQueue(label: Bundle.main.bundleIdentifier! + ".ImageRenderQueue")
-    
+ 
     // MARK: - Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = UIColor.white
         UIApplication.shared.isIdleTimerDisabled = true
-        
         view.addSubview(arSceneView)
         arSceneView.frame = view.frame
         
         let apple = UIImage.init(data: NSData.init(contentsOfFile: Bundle.main.path(forResource: "apple", ofType: "png", inDirectory: "Resource/Images")!)! as Data)
         let google = UIImage.init(data: NSData.init(contentsOfFile: Bundle.main.path(forResource: "google", ofType: "png", inDirectory: "Resource/Images")!)! as Data)
         
-        // 配置ARKit Session
         let arImages = detectImages([apple!, google!], name: ["apple", "google"])
         let configure = ARWorldTrackingConfiguration()
         configure.detectionImages = arImages
-        session.run(configure, options: [.resetTracking, .removeExistingAnchors])
+        arSceneView.session.run(configure, options: [.resetTracking, .removeExistingAnchors])
     }
     
     // MARK: - Private
@@ -68,29 +59,19 @@ extension ImageDetectViewController: ARSCNViewDelegate {
         guard let imageAnchor = anchor as? ARImageAnchor else { return }
         let referenceImage = imageAnchor.referenceImage
         
-        renderQueue.async {
-            // 获取当前检测到的平面
-            let plane = SCNPlane(width: referenceImage.physicalSize.width, height: referenceImage.physicalSize.height)
-            
-            // 创建一个效果节点
-            let effectNode = SCNNode(geometry: plane)
-            effectNode.opacity = 0.25
-            
-            /*
-             `SCNPlane` is vertically oriented in its local coordinate space, but
-             `ARImageAnchor` assumes the image is horizontal in its local space, so
-             rotate the plane to match.
-             */
-            effectNode.eulerAngles.x = -.pi / 2
-            
-            // 添加节点动作(动画)
-            effectNode.opacity = 0.25
-            effectNode.runAction(self.imageHighlightAction)
-            effectNode.name = referenceImage.name
-            
-            // 添加这个节点到空间中
-            node.addChildNode(effectNode)
-        }
+         // 获取当前检测到的平面
+        let plane = SCNPlane(width: referenceImage.physicalSize.width, height: referenceImage.physicalSize.height)
+                   
+        // 创建一个效果节点
+        let effectNode = SCNNode(geometry: plane)
+        effectNode.eulerAngles.x = -.pi / 2
+        
+        // 播放节点动作(动画)
+        effectNode.opacity = 0.25
+        effectNode.runAction(self.imageHighlightAction)
+        effectNode.name = referenceImage.name
+        
+        node.addChildNode(effectNode)
     }
     
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
@@ -106,10 +87,10 @@ extension ImageDetectViewController: ARSCNViewDelegate {
     
     var imageHighlightAction: SCNAction {
         return .sequence([
-            .wait(duration: 0.25),
             .fadeOpacity(to: 0.85, duration: 0.25),
             .fadeOpacity(to: 0.15, duration: 0.25),
             .fadeOpacity(to: 0.85, duration: 0.25),
+            .rotateBy(x: 0, y: CGFloat(Double.pi * 2), z: 0, duration: 0.25),
             .fadeOut(duration: 0.5)])
     }
 }
