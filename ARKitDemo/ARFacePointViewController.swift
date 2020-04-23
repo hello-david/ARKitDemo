@@ -113,6 +113,7 @@ class ARFacePointViewController: UIViewController {
     private var faceMeshUniformBuffer: MTLBuffer!
     private var facePointsBufferAddress: UnsafeMutableRawPointer!
     private var facePointsBuffer: MTLBuffer!
+    private var indexLabels:[UILabel] = []
     
     // MARK: - Life Cycle
     override func viewDidLoad() {
@@ -185,7 +186,7 @@ extension ARFacePointViewController: MTKViewDelegate {
         if view.isEqual(facePointRenderView) {
             faceRenderPassDecriptor.colorAttachments[0].texture = drawable.texture
             guard let commandBuffer = commandQueue?.makeCommandBuffer() else { return }
-            guard  let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: faceRenderPassDecriptor) else { return }
+            guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: faceRenderPassDecriptor) else { return }
             commandBuffer.enqueue()
             
             renderEncoder.setRenderPipelineState(faceRenderPielineState!)
@@ -231,6 +232,22 @@ extension ARFacePointViewController: ARSessionDelegate {
                 curPointAddr.pointee = faceAnchor.geometry.vertices[index]
             }
             facePointRenderView.draw()
+            
+            for label in indexLabels {
+                label.removeFromSuperview()
+            }
+            indexLabels.removeAll()
+            for index in 0..<faceAnchor.geometry.vertices.count {
+                let facePoint = uniforms.pointee.projectionMatrix * uniforms.pointee.viewMatrix * uniforms.pointee.modelMatrix * vector_float4(faceAnchor.geometry.vertices[index], 1.0)
+                let label = UILabel(frame: CGRect.zero)
+                label.text = String(format: "%ld", index)
+                label.font = UIFont(name: "PingFangSC-Regular", size: 5)
+                label.sizeToFit()
+                label.center = CGPoint(x: CGFloat(facePoint.x/facePoint.w + 1.0)/2.0 * facePointRenderView.frame.size.width,
+                                       y: CGFloat(-facePoint.y/facePoint.w + 1.0)/2.0 * facePointRenderView.frame.size.height)
+                view.addSubview(label)
+                indexLabels.append(label)
+            }
         }
     }
 }
